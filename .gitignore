@@ -1,0 +1,15 @@
+# IntelliJ
+.idea/
+*.iws
+*.ipr
+*.iml
+out/
+
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# garbage that MacOS insists in putting in every directory
+.DS_Store
+

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="false" scanPeriod="100 milliseconds">
+
+    <property name="console_log_pattern" value="%date{HH:mm:ss.SSS}  [%-5level] %-60.60logger{40} - %msg%n"/>
+    <property name="file_log_pattern" value="%date{dd-MM-yyyy HH:mm:ss.SSS, UTC}  [%-5level] thread=[%-17thread] %-60.60logger{40} - %msg%n"/>
+
+    <property name="logFilePath" value="${user.home}/.DbSchema/logs/mogodb-jdbc-driver.log"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${console_log_pattern}</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>${file_log_pattern}</Pattern>
+        </encoder>
+
+        <file>${logFilePath}</file>
+        <prudent>false</prudent>
+        <append>true</append>
+    </appender>
+
+    <root>
+        <level value="INFO"/>
+
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>

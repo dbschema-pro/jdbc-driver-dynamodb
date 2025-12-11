@@ -1,0 +1,30 @@
+[versions]
+java = "21"
+kotlin = "2.0.0"
+kotlinLanguageVersion = "2.0"
+slf4j = "2.0.17"
+graal = "24.1.0"
+wisecodersCommonGradle = "5.2.4"
+wisecodersCommonJdbc = "2.0.0"
+
+
+[libraries]
+wisecoders-commonJdbc-commonJdbcJvm = { module = "com.wisecoders.common-jdbc:common-jdbc-jvm", version.ref = "wisecodersCommonJdbc" }
+
+awsSdk2-bom = { module = "software.amazon.awssdk:bom", version = "2.33.4" }
+awsSdk2-dynamodb = { module = "software.amazon.awssdk:dynamodb" }
+awsSdk2-secretsManager = { module = "software.amazon.awssdk:secretsmanager" }
+awsSdk2-auth = { module = "software.amazon.awssdk:auth" }
+awsSdk2-regions = { module = "software.amazon.awssdk:regions" }
+graal-js = { module = "org.graalvm.js:js", version.ref = "graal" }
+graal-jsScriptEngine = { module = "org.graalvm.js:js-scriptengine", version.ref = "graal" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.18" }
+
+# test libraries
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version = "5.13.3" }
+junit-platformLauncher = { module = "org.junit.platform:junit-platform-launcher", version = "1.13.3" }
+assertj-core = { module = "org.assertj:assertj-core", version = "3.27.3" }
+
+
+[plugins]
+wisecoders-commonGradle-jdbcDriver = { id = "com.wisecoders.common_gradle.jdbc_driver.jdbc-driver", version.ref = "wisecodersCommonGradle" }
