@@ -4,9 +4,11 @@ import java.sql.Connection
 import java.sql.DriverManager
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
+@Disabled("disabled until we fix the build to automatically start DynamoDB Local")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DynamoDbCreateTable : AbstractTest() {
 

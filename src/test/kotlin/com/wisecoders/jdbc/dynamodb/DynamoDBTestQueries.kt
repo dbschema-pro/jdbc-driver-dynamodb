@@ -2,9 +2,11 @@ package com.wisecoders.jdbc.dynamodb
 
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
+@Disabled("disabled until we fix the build to automatically start DynamoDB Local")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DynamoDbTestQueries : AbstractTest(){
 
