@@ -1,6 +1,6 @@
 package com.wisecoders.jdbc.dynamodb
 
-import com.wisecoders.common_jdbc.jvm.result_set.ListOfObjectsAsResultSet
+import com.wisecoders.common_jdbc.jvm.result_set.ArrayResultSet
 import com.wisecoders.common_jdbc.jvm.result_set.OkResultSet
 import com.wisecoders.common_jdbc.jvm.sql.AbstractPreparedStatement
 import java.io.ByteArrayOutputStream
@@ -39,7 +39,7 @@ class DynamoDBPreparedStatement(
                 .build()
             try {
                 val response = connection.clientInstance.executeStatement(request)
-                rs = ListOfObjectsAsResultSet(unwrapResult(response.items()))
+                rs = toArrayResultSet(unwrapResult(response.items()))
                 return rs!!
             } catch (e: Exception) {
                 throw SQLException("Failed to execute query: ${e.message}", e)
@@ -235,6 +235,14 @@ class DynamoDBPreparedStatement(
 
     fun unwrapResult(items: List<Map<String, AttributeValue>>): List<Map<String, Any?>> {
         return items.map { unwrapItem(it) }
+    }
+
+    fun toArrayResultSet(items: List<Map<String, Any?>>): ArrayResultSet {
+        val columnNames: List<String> = items.flatMap { it.keys }.distinct()
+        val rows: List<MutableList<Any?>> = items.map { item ->
+            columnNames.map { col -> item[col] }.toMutableList()
+        }
+        return ArrayResultSet(rows, columnNames)
     }
 
     companion object {
