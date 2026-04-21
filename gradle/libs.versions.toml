@@ -1,11 +1,10 @@
 [versions]
-java = "21"
-kotlin = "2.0.0"
-kotlinLanguageVersion = "2.0"
+java = "25"
+kotlin = "2.3.10"
 slf4j = "2.0.17"
 graal = "24.1.0"
-wisecodersCommonGradle = "5.2.4"
-wisecodersCommonJdbc = "2.0.0"
+wisecodersCommonGradle = "11.0.0"
+wisecodersCommonJdbc = "12.0.0"
 
 
 [libraries]
