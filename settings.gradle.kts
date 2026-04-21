@@ -34,8 +34,3 @@ plugins {
 
 rootProject.name = "jdbc-driver-dynamodb"
 
-includeBuild("../common-jdbc") {
-    dependencySubstitution {
-        substitute(module("com.wisecoders.common-jdbc:common-jdbc-jvm")).using(project(":common-jdbc-jvm"))
-    }
-}
