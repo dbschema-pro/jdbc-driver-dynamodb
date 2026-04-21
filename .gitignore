@@ -13,3 +13,6 @@ build/
 # garbage that MacOS insists in putting in every directory
 .DS_Store
 
+# AWS test credentials – never commit these
+src/test/resources/aws-test.properties
+

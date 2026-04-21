@@ -8,7 +8,9 @@ import java.io.OutputStream
 import java.math.BigDecimal
 import java.sql.ResultSet
 import java.sql.SQLException
+import java.util.TreeMap
 import org.graalvm.polyglot.Context
+import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.DeleteTableRequest
 import software.amazon.awssdk.services.dynamodb.model.ExecuteStatementRequest
@@ -19,6 +21,7 @@ class DynamoDBPreparedStatement(
     sql: String? = null,
 ) : AbstractPreparedStatement(sql) {
 
+    private val parameters = TreeMap<Int, AttributeValue?>()
 
     override fun execute(sql: String): Boolean {
         rs = executeQuery(sql)
@@ -29,10 +32,11 @@ class DynamoDBPreparedStatement(
         if (dropTable(sql))
             return OkResultSet()
         if (usePartiQL(sql)) {
+            val params = buildParameters()
             val request = ExecuteStatementRequest.builder()
                 .statement(sql)
+                .apply { if (params.isNotEmpty()) parameters(params) }
                 .build()
-
             try {
                 val response = connection.clientInstance.executeStatement(request)
                 rs = ListOfObjectsAsResultSet(unwrapResult(response.items()))
@@ -43,7 +47,7 @@ class DynamoDBPreparedStatement(
         } else {
             val os = ByteArrayOutputStream()
             try {
-                val res = executeJavaScript(sql, os)
+                executeJavaScript(sql, os)
             } catch (ex: Throwable) {
                 println(ex)
             }
@@ -57,15 +61,15 @@ class DynamoDBPreparedStatement(
             return 1
 
         if (usePartiQL(sql)) {
-            println("Execute partiql")
+            val params = buildParameters()
             val request = ExecuteStatementRequest.builder()
                 .statement(sql)
+                .apply { if (params.isNotEmpty()) parameters(params) }
                 .build()
-
             return try {
                 val response = connection.clientInstance.executeStatement(request)
-                // DynamoDB doesn't give affected rows, so return 1 if OK
-                if (response.hasItems()) response.items().size else 1
+                // DynamoDB INSERT/UPDATE/DELETE return empty items; return 1 on success
+                if (response.items().isNotEmpty()) response.items().size else 1
             } catch (e: Exception) {
                 throw SQLException("Failed to execute update: ${e.message}", e)
             }
@@ -78,11 +82,8 @@ class DynamoDBPreparedStatement(
     }
 
     fun usePartiQL(sql: String): Boolean {
-        return listOf<String>("select", "update", "insert", "delete").any {
-            sql.startsWith(
-                it.trimIndent(),
-                ignoreCase = true
-            )
+        return listOf("select", "update", "insert", "delete").any {
+            sql.startsWith(it.trimIndent(), ignoreCase = true)
         }
     }
 
@@ -91,9 +92,6 @@ class DynamoDBPreparedStatement(
             ?: return false
 
         val tableName = match.groupValues[2]
-
-        println("Dropping table: $tableName")
-
         try {
             val request = DeleteTableRequest.builder()
                 .tableName(tableName)
@@ -105,13 +103,12 @@ class DynamoDBPreparedStatement(
         }
     }
 
-
     fun executeJavaScript(
         script: String,
         os: OutputStream,
     ): Any? {
         val ctx = Context.newBuilder("js")
-            .allowAllAccess(true) // allow interop with Java/Kotlin if needed
+            .allowAllAccess(true)
             .out(os)
             .build()
 
@@ -121,10 +118,100 @@ class DynamoDBPreparedStatement(
         return ctx.eval("js", script)
     }
 
-    companion object {
-        val dropTableRegex = Regex(
-            pattern = """(?i)^\s*DROP\s+TABLE\s+("?)([A-Za-z0-9_.-]+)\1\s*;?\s*$"""
+    // -------------------------------------------------
+    // Parameter binding – maps 1-based indices to AttributeValues.
+    // Parameters persist across executions until clearParameters() is called.
+    // -------------------------------------------------
+
+    override fun clearParameters() {
+        parameters.clear()
+    }
+
+    override fun setNull(parameterIndex: Int, sqlType: Int) {
+        parameters[parameterIndex] = AttributeValue.fromNul(true)
+    }
+
+    override fun setBoolean(parameterIndex: Int, x: Boolean) {
+        parameters[parameterIndex] = AttributeValue.fromBool(x)
+    }
+
+    override fun setByte(parameterIndex: Int, x: Byte) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toString())
+    }
+
+    override fun setShort(parameterIndex: Int, x: Short) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toString())
+    }
+
+    override fun setInt(parameterIndex: Int, x: Int) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toString())
+    }
+
+    override fun setLong(parameterIndex: Int, x: Long) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toString())
+    }
+
+    override fun setFloat(parameterIndex: Int, x: Float) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toBigDecimal().toPlainString())
+    }
+
+    override fun setDouble(parameterIndex: Int, x: Double) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toBigDecimal().toPlainString())
+    }
+
+    override fun setBigDecimal(parameterIndex: Int, x: BigDecimal) {
+        parameters[parameterIndex] = AttributeValue.fromN(x.toPlainString())
+    }
+
+    override fun setString(parameterIndex: Int, x: String) {
+        parameters[parameterIndex] = AttributeValue.fromS(x)
+    }
+
+    override fun setBytes(parameterIndex: Int, x: ByteArray) {
+        parameters[parameterIndex] = AttributeValue.fromB(SdkBytes.fromByteArray(x))
+    }
+
+    override fun setObject(parameterIndex: Int, x: Any) {
+        parameters[parameterIndex] = toAttributeValue(x)
+    }
+
+    /** Converts a Kotlin/Java value recursively to an AttributeValue. */
+    private fun toAttributeValue(value: Any?): AttributeValue = when (value) {
+        null                -> AttributeValue.fromNul(true)
+        is AttributeValue   -> value
+        is Boolean          -> AttributeValue.fromBool(value)
+        is String           -> AttributeValue.fromS(value)
+        is BigDecimal       -> AttributeValue.fromN(value.toPlainString())
+        is Number           -> AttributeValue.fromN(value.toString())
+        is ByteArray        -> AttributeValue.fromB(SdkBytes.fromByteArray(value))
+        is Map<*, *>        -> AttributeValue.fromM(
+            value.entries.associate { (k, v) -> k.toString() to toAttributeValue(v) }
         )
+        is List<*>          -> AttributeValue.fromL(value.map { toAttributeValue(it) })
+        is Set<*>           -> {
+            val items = value.toList()
+            when (items.firstOrNull()) {
+                is String -> AttributeValue.fromSs(items.map { it.toString() })
+                is Number -> AttributeValue.fromNs(items.map { it.toString() })
+                else      -> AttributeValue.fromL(items.map { toAttributeValue(it) })
+            }
+        }
+        else                -> AttributeValue.fromS(value.toString())
+    }
+
+    /**
+     * Builds the ordered parameter list for the PartiQL statement.
+     * Validates that all indices between 1 and max are populated.
+     */
+    private fun buildParameters(): List<AttributeValue?> {
+        if (parameters.isEmpty()) return emptyList()
+        val maxIndex = parameters.lastKey()
+        for (i in 1..maxIndex) {
+            if (!parameters.containsKey(i)) {
+                throw SQLException("Missing parameter at index $i; parameters must be set contiguously from 1 to $maxIndex")
+            }
+        }
+        return (1..maxIndex).map { parameters[it] ?: AttributeValue.fromNul(true) }
     }
 
     fun unwrapAttributeValue(av: AttributeValue): Any? {
@@ -149,23 +236,10 @@ class DynamoDBPreparedStatement(
     fun unwrapResult(items: List<Map<String, AttributeValue>>): List<Map<String, Any?>> {
         return items.map { unwrapItem(it) }
     }
-    private var documentParam: Map<Any,Any>? = null
 
-    @Throws(SQLException::class)
-    override fun setObject(
-        parameterIndex: Int,
-        x: Any
-    ) {
-        documentParam = when (x) {
-            is Map<*, *> -> {
-                @Suppress("UNCHECKED_CAST")
-                x as Map<Any,Any>
-            }
-
-            else -> {
-                throw SQLException("Map object expected. You currently did setObject( " + x.javaClass.name + " ) ")
-            }
-        }
+    companion object {
+        val dropTableRegex = Regex(
+            pattern = """(?i)^\s*DROP\s+TABLE\s+("?)([A-Za-z0-9_.-]+)\1\s*;?\s*$"""
+        )
     }
-
 }

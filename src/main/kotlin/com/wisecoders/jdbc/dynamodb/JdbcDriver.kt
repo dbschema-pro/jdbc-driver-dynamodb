@@ -22,15 +22,11 @@ class JdbcDriver : Driver {
 
     override fun getPropertyInfo(url: String, info: Properties): Array<DriverPropertyInfo> {
         return arrayOf(
-            DriverPropertyInfo("region", info.getProperty("region", "us-east-1")).apply {
-                description = "AWS Region"
-                required = true
-            },
-            DriverPropertyInfo("accessKeyId", info.getProperty("accessKeyId")).apply {
+            DriverPropertyInfo("user", info.getProperty("user")).apply {
                 description = "AWS Access Key ID"
                 required = true
             },
-            DriverPropertyInfo("secretAccessKey", info.getProperty("secretAccessKey")).apply {
+            DriverPropertyInfo("password", info.getProperty("password")).apply {
                 description = "AWS Secret Access Key"
                 required = true
             }
