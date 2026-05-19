@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.awsSdk2.secretsManager)
     implementation(libs.awsSdk2.auth)
     implementation(libs.awsSdk2.regions)
+    implementation(libs.graal.js)
     implementation(libs.graal.jsScriptEngine)
 
     runtimeOnly(libs.logback.classic)
