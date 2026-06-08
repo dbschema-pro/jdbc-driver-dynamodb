@@ -15,8 +15,9 @@ awsSdk2-dynamodb = { module = "software.amazon.awssdk:dynamodb" }
 awsSdk2-secretsManager = { module = "software.amazon.awssdk:secretsmanager" }
 awsSdk2-auth = { module = "software.amazon.awssdk:auth" }
 awsSdk2-regions = { module = "software.amazon.awssdk:regions" }
-graal-js = { module = "org.graalvm.js:js", version.ref = "graal" }
-graal-jsScriptEngine = { module = "org.graalvm.js:js-scriptengine", version.ref = "graal" }
+graal-polyglot-polyglot = { module = "org.graalvm.polyglot:polyglot", version.ref = "graal" }
+graal-jsLanguage = { module = "org.graalvm.js:js-language", version.ref = "graal" }
+graal-truffle-runtime = { module = "org.graalvm.truffle:truffle-runtime", version.ref = "graal" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.18" }
 
 # test libraries
