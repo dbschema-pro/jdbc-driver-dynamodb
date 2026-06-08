@@ -41,7 +41,7 @@ class JdbcDriver : Driver {
 
     override fun getMinorVersion(): Int = 0
 
-    override fun jdbcCompliant(): Boolean = true
+    override fun jdbcCompliant(): Boolean = false
 
     override fun getParentLogger(): Logger? {
         return null

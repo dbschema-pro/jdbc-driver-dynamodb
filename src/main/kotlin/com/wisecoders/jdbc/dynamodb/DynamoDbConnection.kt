@@ -17,6 +17,7 @@ class DynamoDBConnection(
     info: Properties
 ) : AbstractConnection() {
 
+    private var closed = false
     private val client: DynamoDbClient
 
     val clientInstance: DynamoDbClient
@@ -45,18 +46,29 @@ class DynamoDBConnection(
     }
 
     override fun createStatement(): Statement {
-        check(!isClosed) { "Connection is closed." }
+        checkOpen()
         return DynamoDBPreparedStatement(this)
     }
 
-    override fun prepareStatement(sql: String): PreparedStatement =
-        DynamoDBPreparedStatement(this, sql)
-
-    override fun close() {
-        client.close()
+    override fun prepareStatement(sql: String): PreparedStatement {
+        checkOpen()
+        return DynamoDBPreparedStatement(this, sql)
     }
 
-    override fun isClosed(): Boolean = false
+    private fun checkOpen() {
+        if (closed) {
+            throw IllegalStateException("Connection is closed.")
+        }
+    }
+
+    override fun close() {
+        if (!closed) {
+            closed = true
+            client.close()
+        }
+    }
+
+    override fun isClosed(): Boolean = closed
 
     override fun getMetaData() = DynamoDBDatabaseMetaData(client, this)
 }
