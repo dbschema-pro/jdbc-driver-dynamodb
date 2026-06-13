@@ -21,18 +21,11 @@ class DynamoDBDatabaseMetaData(
         types: Array<out String>?
     ): ResultSet {
         val tables = client.listTables().tableNames()
-        val data = tables.map {
-            arrayOf(
-                null, // catalog
-                null, // schema
-                it,   // table name
-                "TABLE", // type
-                null  // remarks
-            )
-        }
+        val data: List<Array<Any?>> = tables
+            .filter { tableNamePattern == null || it.contains(tableNamePattern) }
+            .map { arrayOf<Any?>(null, null, it, "TABLE", null) }
 
-        @Suppress("UNCHECKED_CAST")
-        return com.wisecoders.common_jdbc.jvm.sql.SimpleResultSet(TABLE_INFO, data as List<Array<Any?>>)
+        return com.wisecoders.common_jdbc.jvm.sql.SimpleResultSet(TABLE_INFO, data)
     }
 
 
@@ -124,18 +117,30 @@ class DynamoDBDatabaseMetaData(
         val desc = client.describeTable { it.tableName(table) }.table()
         val results = mutableListOf<Array<Any?>>()
 
-        desc.globalSecondaryIndexes()?.forEachIndexed { idx, gsi ->
-            gsi.keySchema().forEach { key ->
+        desc.globalSecondaryIndexes()?.forEach { gsi ->
+            gsi.keySchema().forEachIndexed { keyIdx, key ->
                 results += arrayOf(
-                    null, null, table, false, false, idx + 1, key.attributeName(), Types.VARCHAR, "ASC"
+                    null, null, table,
+                    true,              // NON_UNIQUE — GSIs are non-unique
+                    gsi.indexName(),   // INDEX_QUALIFIER — the GSI name
+                    3,                 // TYPE — tableIndexOther
+                    keyIdx + 1,        // ORDINAL_POSITION
+                    key.attributeName(), // COLUMN_NAME
+                    "ASC"              // ASC_OR_DESC
                 )
             }
         }
 
-        desc.localSecondaryIndexes()?.forEachIndexed { idx, lsi ->
-            lsi.keySchema().forEach { key ->
+        desc.localSecondaryIndexes()?.forEach { lsi ->
+            lsi.keySchema().forEachIndexed { keyIdx, key ->
                 results += arrayOf(
-                    null, null, table, true, false, idx + 100, key.attributeName(), Types.VARCHAR, "ASC"
+                    null, null, table,
+                    false,             // NON_UNIQUE — LSIs are unique within the partition
+                    lsi.indexName(),   // INDEX_QUALIFIER — the LSI name
+                    3,                 // TYPE — tableIndexOther
+                    keyIdx + 1,        // ORDINAL_POSITION
+                    key.attributeName(), // COLUMN_NAME
+                    "ASC"              // ASC_OR_DESC
                 )
             }
         }

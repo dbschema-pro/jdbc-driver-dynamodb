@@ -18,14 +18,12 @@ abstract class AbstractTest {
 
 
     fun createClient(): DynamoDBConnection {
-
         val properties = Properties().apply {
-            setProperty("endpoint", "http://localhost:8000")
+            setProperty("endpoint", DynamoDbContainer.endpoint)
             setProperty("accessKeyId", "dummy")
             setProperty("secretAccessKey", "dummy")
             setProperty("region", "us-east-1")
         }
-
         return DynamoDBConnection("jdbc:dynamodb://localhost:8000", properties)
     }
 

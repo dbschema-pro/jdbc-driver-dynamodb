@@ -4,12 +4,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import software.amazon.awssdk.services.dynamodb.model.ExecuteStatementRequest
 
-@Disabled("disabled until this test is fixed")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DynamoDbTests : AbstractTest(){
 
@@ -18,18 +16,7 @@ class DynamoDbTests : AbstractTest(){
 
     @BeforeAll
     fun setupClient() {
-        /*
-    private lateinit var dynamo: GenericContainer<*>
-        dynamo = GenericContainer(DockerImageName.parse("amazon/dynamodb-local:latest"))
-            .withExposedPorts(8000)
-        dynamo.start()
-        val mappedPort = dynamo.getMappedPort(8000)
-        val host = dynamo.host
-
-        println("DynamoDB Local running at http://$host:$mappedPort")
-        */
-
-        var dynamoDbClient = dynamoDbConnection.clientInstance
+        val dynamoDbClient = dynamoDbConnection.clientInstance
 
         dropTable(dynamoDbClient, tableName)
         createTable(dynamoDbClient, tableName)
@@ -58,8 +45,8 @@ class DynamoDbTests : AbstractTest(){
             }
         }
         assertThat( columns).contains(
-            Triple("UserId", "HASH", 0),
-            Triple("Address", "JSON", 0),
+            Triple("UserId", "VARCHAR", 0),   // key attribute type is VARCHAR (S = string)
+            Triple("Address", "JSON", 0),      // sampled map attribute uses JSON as type name
         )
 
     }
@@ -83,7 +70,6 @@ class DynamoDbTests : AbstractTest(){
         }
     }
 
-    @AfterAll
     @Test
     fun `list items2`(){
         val limit = 20

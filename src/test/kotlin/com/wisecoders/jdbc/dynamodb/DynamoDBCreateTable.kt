@@ -4,11 +4,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
-@Disabled("disabled until we fix the build to automatically start DynamoDB Local")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DynamoDbCreateTable : AbstractTest() {
 
@@ -17,10 +15,7 @@ class DynamoDbCreateTable : AbstractTest() {
     @BeforeAll
     fun setupClient() {
         Class.forName("com.wisecoders.jdbc.dynamodb.JdbcDriver")
-
-        val url = "jdbc:dynamodb://localhost:8000?region=us-east-1&accessKeyId=dummy&secretAccessKey=dummy"
-        jdbcConnection = DriverManager.getConnection(url, null, null)
-
+        jdbcConnection = DriverManager.getConnection(DynamoDbContainer.jdbcUrl(), null, null)
     }
 
     @Test
