@@ -5,6 +5,7 @@ import java.sql.DriverManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -25,6 +26,7 @@ import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType
  * Verifies getTables, getColumns, getPrimaryKeys, and getIndexInfo against tables
  * created in a DynamoDB Local container managed by Testcontainers.
  */
+@Tag("docker")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DynamoDbMetaDataTest {
 

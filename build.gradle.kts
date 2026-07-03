@@ -46,3 +46,12 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
 tasks.withType<Test>().configureEach {
     classpath += junitCompileStubs
 }
+
+tasks.test {
+    val includeTagsProp = providers.systemProperty("includeTags")
+    val excludeTagsProp = providers.systemProperty("excludeTags")
+    useJUnitPlatform {
+        includeTagsProp.orNull?.let { includeTags(it) }
+        excludeTagsProp.orNull?.let { excludeTags(it) }
+    }
+}

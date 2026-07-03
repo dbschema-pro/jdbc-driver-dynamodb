@@ -2,6 +2,7 @@ package com.wisecoders.jdbc.dynamodb
 
 import com.wisecoders.common_jdbc.jvm.result_set.ListOfObjectsAsResultSet
 import java.util.Properties
+import org.junit.jupiter.api.Tag
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
@@ -13,9 +14,8 @@ import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType
 
+@Tag("docker")
 abstract class AbstractTest {
-
-
 
     fun createClient(): DynamoDBConnection {
         val properties = Properties().apply {
